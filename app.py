@@ -5,18 +5,21 @@ import pandas as pd
 # Configuración de la página
 st.set_page_config(page_title="Consulta de Personal Médico", page_icon="🏥", layout="wide")
 
+# Mostrar el contenido del archivo secrets (para depuración opcional)
+# st.write(st.secrets)  # <- Puedes descomentar para verificar que se lea correctamente
+
 # Leer credenciales desde secrets
 db = st.secrets["postgres"]
 
-# Función para conectar a la BD
+# Función para conectar a la base de datos
 def get_connection():
     try:
         conn = psycopg2.connect(
-            user=db["user"],
-            password=db["password"],
-            host=db["host"],
-            port=db["port"],
-            dbname=db["dbname"]
+            user=db["USER"],
+            password=db["PASSWORD"],
+            host=db["HOST"],
+            port=db["PORT"],
+            dbname=db["DBNAME"]
         )
         return conn
     except Exception as e:
@@ -31,20 +34,24 @@ termino = st.sidebar.text_input("Ingrese el término de búsqueda:")
 # Título principal
 st.title("🏥 Aplicativo de Consulta de Personal Médico")
 
-# Conexión y consulta
+# Conectar a la base de datos
 conn = get_connection()
 if conn:
     try:
+        # Consulta base
         query = "SELECT id, nombre, apellido, especialidad, telefono, email FROM personal_medico"
 
+        # Filtros
         if termino:
             if opcion_busqueda == "Nombre":
                 query += f" WHERE LOWER(nombre) LIKE LOWER('%{termino}%')"
             elif opcion_busqueda == "Especialidad":
                 query += f" WHERE LOWER(especialidad) LIKE LOWER('%{termino}%')"
 
+        # Ejecutar consulta
         df = pd.read_sql(query, conn)
 
+        # Mostrar resultados
         if df.empty:
             st.warning("No se encontraron resultados.")
         else:
